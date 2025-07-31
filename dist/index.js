@@ -34708,7 +34708,6 @@ class ForgeRunner {
             'script',
             scriptPath,
             '--rpc-url', rpcUrl,
-            '--private-key', privateKey,
             '--gas-limit', gasLimit,
             '--json'
         ];
@@ -34719,6 +34718,10 @@ class ForgeRunner {
         let error = '';
         const exitCode = await exec.exec('forge', args, {
             cwd: this.projectRoot,
+            env: {
+                ...process.env,
+                PRIVATE_KEY: privateKey
+            },
             listeners: {
                 stdout: (data) => {
                     output += data.toString();

@@ -34792,9 +34792,13 @@ class ForgeRunner {
                 if (proxyMatch) {
                     result.contractAddress = proxyMatch[1];
                 }
-                const implementationMatch = line.match(/Implementation deployed at: (0x[a-fA-F0-9]{40})/);
+                const implementationMatch = line.match(/(?:Implementation|New implementation) deployed at: (0x[a-fA-F0-9]{40})/);
                 if (implementationMatch) {
                     result.implementationAddress = implementationMatch[1];
+                }
+                const newImplementationMatch = line.match(/New implementation: (0x[a-fA-F0-9]{40})/);
+                if (newImplementationMatch) {
+                    result.implementationAddress = newImplementationMatch[1];
                 }
                 const contractMatch = line.match(/Contract deployed at: (0x[a-fA-F0-9]{40})/);
                 if (contractMatch) {

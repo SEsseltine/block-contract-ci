@@ -23,7 +23,9 @@ export class DeploymentService {
         inputs.privateKey,
         inputs.broadcast,
         inputs.gasLimit,
-        inputs.proxyAddress
+        inputs.proxyAddress,
+        inputs.verifyContracts,
+        inputs.etherscanApiKey
       );
 
       const result: DeploymentResult = {

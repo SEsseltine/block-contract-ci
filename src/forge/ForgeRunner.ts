@@ -12,7 +12,9 @@ export class ForgeRunner {
     privateKey: string,
     broadcast: boolean = true,
     gasLimit: string = '3000000',
-    proxyAddress?: string
+    proxyAddress?: string,
+    verify: boolean = false,
+    etherscanApiKey?: string
   ): Promise<ForgeDeployOutput> {
     core.info(`Running Forge script: ${scriptPath}`);
     
@@ -26,6 +28,11 @@ export class ForgeRunner {
 
     if (broadcast) {
       args.push('--broadcast');
+    }
+
+    if (verify && etherscanApiKey) {
+      args.push('--verify');
+      args.push('--etherscan-api-key', etherscanApiKey);
     }
 
     let output = '';

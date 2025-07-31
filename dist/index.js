@@ -34702,7 +34702,7 @@ class ForgeRunner {
     constructor(projectRoot) {
         this.projectRoot = projectRoot;
     }
-    async runDeployScript(scriptPath, rpcUrl, privateKey, broadcast = true, gasLimit = '3000000', proxyAddress) {
+    async runDeployScript(scriptPath, rpcUrl, privateKey, broadcast = true, gasLimit = '3000000', proxyAddress, verify = false, etherscanApiKey) {
         core.info(`Running Forge script: ${scriptPath}`);
         const args = [
             'script',
@@ -34713,6 +34713,10 @@ class ForgeRunner {
         ];
         if (broadcast) {
             args.push('--broadcast');
+        }
+        if (verify && etherscanApiKey) {
+            args.push('--verify');
+            args.push('--etherscan-api-key', etherscanApiKey);
         }
         let output = '';
         let error = '';
@@ -35036,7 +35040,7 @@ class DeploymentService {
             await this.forgeRunner.test();
             // Execute deployment script
             core.info(`Executing deploy script: ${inputs.deployScript}`);
-            const forgeOutput = await this.forgeRunner.runDeployScript(inputs.deployScript, inputs.rpcUrl, inputs.privateKey, inputs.broadcast, inputs.gasLimit, inputs.proxyAddress);
+            const forgeOutput = await this.forgeRunner.runDeployScript(inputs.deployScript, inputs.rpcUrl, inputs.privateKey, inputs.broadcast, inputs.gasLimit, inputs.proxyAddress, inputs.verifyContracts, inputs.etherscanApiKey);
             const result = {
                 implementationAddress: forgeOutput.implementationAddress || forgeOutput.contractAddress,
                 transactionHash: forgeOutput.transactionHash,

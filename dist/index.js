@@ -34698,17 +34698,15 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ForgeRunner = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const exec = __importStar(__nccwpck_require__(5236));
-const path = __importStar(__nccwpck_require__(6928));
 class ForgeRunner {
     constructor(projectRoot) {
         this.projectRoot = projectRoot;
     }
     async runDeployScript(scriptPath, rpcUrl, privateKey, broadcast = true, gasLimit = '3000000') {
-        const fullScriptPath = path.join(this.projectRoot, scriptPath);
-        core.info(`Running Forge script: ${fullScriptPath}`);
+        core.info(`Running Forge script: ${scriptPath}`);
         const args = [
             'script',
-            fullScriptPath,
+            scriptPath,
             '--rpc-url', rpcUrl,
             '--private-key', privateKey,
             '--gas-limit', gasLimit,

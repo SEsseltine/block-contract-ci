@@ -1,0 +1,59 @@
+name: 'Smart Contract Deploy'
+description: 'Deploy and upgrade smart contracts using Forge with automatic UUPS proxy management'
+author: 'block-contract-ci'
+
+inputs:
+  network:
+    description: 'Target network (mainnet, sepolia, polygon, etc.)'
+    required: true
+  rpc-url:
+    description: 'RPC URL for the target network'
+    required: true
+  private-key:
+    description: 'Private key for deployment (use secrets)'
+    required: true
+  deploy-script:
+    description: 'Path to Forge deploy script (e.g., script/Deploy.s.sol)'
+    required: true
+  forge-project-root:
+    description: 'Root directory of the Forge project'
+    required: false
+    default: '.'
+  proxy-address:
+    description: 'Address of existing UUPS proxy to upgrade (optional)'
+    required: false
+  verify-contracts:
+    description: 'Verify contracts on block explorer'
+    required: false
+    default: 'true'
+  etherscan-api-key:
+    description: 'Etherscan API key for contract verification'
+    required: false
+  gas-limit:
+    description: 'Gas limit for transactions'
+    required: false
+    default: '3000000'
+  broadcast:
+    description: 'Whether to broadcast transactions'
+    required: false
+    default: 'true'
+
+outputs:
+  implementation-address:
+    description: 'Address of the deployed implementation contract'
+  proxy-address:
+    description: 'Address of the proxy contract'
+  transaction-hash:
+    description: 'Transaction hash of the deployment/upgrade'
+  gas-used:
+    description: 'Gas used for the deployment'
+  verified:
+    description: 'Whether contract verification succeeded'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
+
+branding:
+  icon: 'upload-cloud'
+  color: 'blue'

@@ -34702,7 +34702,7 @@ class ForgeRunner {
     constructor(projectRoot) {
         this.projectRoot = projectRoot;
     }
-    async runDeployScript(scriptPath, rpcUrl, privateKey, broadcast = true, gasLimit = '3000000') {
+    async runDeployScript(scriptPath, rpcUrl, privateKey, broadcast = true, gasLimit = '3000000', proxyAddress) {
         core.info(`Running Forge script: ${scriptPath}`);
         const args = [
             'script',
@@ -34720,7 +34720,8 @@ class ForgeRunner {
             cwd: this.projectRoot,
             env: {
                 ...process.env,
-                PRIVATE_KEY: privateKey
+                PRIVATE_KEY: privateKey,
+                ...(proxyAddress && { PROXY_ADDRESS: proxyAddress })
             },
             listeners: {
                 stdout: (data) => {
@@ -34913,22 +34914,20 @@ async function run() {
         const verificationService = new VerificationService_1.VerificationService(inputs.etherscanApiKey);
         let result;
         if (inputs.proxyAddress) {
-            // Upgrade existing proxy
+            // Upgrade existing proxy using UpgradeScript
             core.info(`Upgrading existing proxy at ${inputs.proxyAddress}`);
-            // Deploy only the implementation
-            const deployResult = await deploymentService.deploy(inputs);
-            if (!deployResult.implementationAddress) {
-                throw new Error('Failed to deploy implementation contract');
-            }
-            // Upgrade the proxy
-            const upgradeResult = await proxyService.upgradeProxy(inputs.proxyAddress, deployResult.implementationAddress);
-            result = {
-                implementationAddress: deployResult.implementationAddress,
-                proxyAddress: inputs.proxyAddress,
-                transactionHash: upgradeResult.transactionHash,
-                gasUsed: upgradeResult.gasUsed,
-                verified: false
+            // Modify inputs to use UpgradeScript
+            const upgradeInputs = {
+                ...inputs,
+                deployScript: inputs.deployScript.replace('DeployScript', 'UpgradeScript')
             };
+            // Run the upgrade script which handles everything
+            result = await deploymentService.deploy(upgradeInputs);
+            if (!result.implementationAddress) {
+                throw new Error('Failed to deploy implementation contract during upgrade');
+            }
+            // Set the proxy address to the existing one
+            result.proxyAddress = inputs.proxyAddress;
             core.info(`Proxy upgrade completed. Implementation: ${result.implementationAddress}`);
         }
         else {
@@ -35037,7 +35036,7 @@ class DeploymentService {
             await this.forgeRunner.test();
             // Execute deployment script
             core.info(`Executing deploy script: ${inputs.deployScript}`);
-            const forgeOutput = await this.forgeRunner.runDeployScript(inputs.deployScript, inputs.rpcUrl, inputs.privateKey, inputs.broadcast, inputs.gasLimit);
+            const forgeOutput = await this.forgeRunner.runDeployScript(inputs.deployScript, inputs.rpcUrl, inputs.privateKey, inputs.broadcast, inputs.gasLimit, inputs.proxyAddress);
             const result = {
                 implementationAddress: forgeOutput.implementationAddress || forgeOutput.contractAddress,
                 transactionHash: forgeOutput.transactionHash,

@@ -22,7 +22,8 @@ export class DeploymentService {
         inputs.rpcUrl,
         inputs.privateKey,
         inputs.broadcast,
-        inputs.gasLimit
+        inputs.gasLimit,
+        inputs.proxyAddress
       );
 
       const result: DeploymentResult = {

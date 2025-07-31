@@ -19,29 +19,24 @@ export async function run(): Promise<void> {
     let result: DeploymentResult;
 
     if (inputs.proxyAddress) {
-      // Upgrade existing proxy
+      // Upgrade existing proxy using UpgradeScript
       core.info(`Upgrading existing proxy at ${inputs.proxyAddress}`);
       
-      // Deploy only the implementation
-      const deployResult = await deploymentService.deploy(inputs);
+      // Modify inputs to use UpgradeScript
+      const upgradeInputs = {
+        ...inputs,
+        deployScript: inputs.deployScript.replace('DeployScript', 'UpgradeScript')
+      };
       
-      if (!deployResult.implementationAddress) {
-        throw new Error('Failed to deploy implementation contract');
+      // Run the upgrade script which handles everything
+      result = await deploymentService.deploy(upgradeInputs);
+      
+      if (!result.implementationAddress) {
+        throw new Error('Failed to deploy implementation contract during upgrade');
       }
       
-      // Upgrade the proxy
-      const upgradeResult = await proxyService.upgradeProxy(
-        inputs.proxyAddress,
-        deployResult.implementationAddress
-      );
-      
-      result = {
-        implementationAddress: deployResult.implementationAddress,
-        proxyAddress: inputs.proxyAddress,
-        transactionHash: upgradeResult.transactionHash,
-        gasUsed: upgradeResult.gasUsed,
-        verified: false
-      };
+      // Set the proxy address to the existing one
+      result.proxyAddress = inputs.proxyAddress;
       
       core.info(`Proxy upgrade completed. Implementation: ${result.implementationAddress}`);
     } else {

@@ -11,7 +11,8 @@ export class ForgeRunner {
     rpcUrl: string,
     privateKey: string,
     broadcast: boolean = true,
-    gasLimit: string = '3000000'
+    gasLimit: string = '3000000',
+    proxyAddress?: string
   ): Promise<ForgeDeployOutput> {
     core.info(`Running Forge script: ${scriptPath}`);
     
@@ -34,7 +35,8 @@ export class ForgeRunner {
       cwd: this.projectRoot,
       env: {
         ...process.env,
-        PRIVATE_KEY: privateKey
+        PRIVATE_KEY: privateKey,
+        ...(proxyAddress && { PROXY_ADDRESS: proxyAddress })
       },
       listeners: {
         stdout: (data: Buffer) => {

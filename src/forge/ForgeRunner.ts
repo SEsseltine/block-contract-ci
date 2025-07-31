@@ -13,13 +13,11 @@ export class ForgeRunner {
     broadcast: boolean = true,
     gasLimit: string = '3000000'
   ): Promise<ForgeDeployOutput> {
-    const fullScriptPath = path.join(this.projectRoot, scriptPath);
-    
-    core.info(`Running Forge script: ${fullScriptPath}`);
+    core.info(`Running Forge script: ${scriptPath}`);
     
     const args = [
       'script',
-      fullScriptPath,
+      scriptPath,
       '--rpc-url', rpcUrl,
       '--private-key', privateKey,
       '--gas-limit', gasLimit,

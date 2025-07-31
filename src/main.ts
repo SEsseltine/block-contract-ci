@@ -16,18 +16,38 @@ export async function run(): Promise<void> {
     const proxyService = new ProxyService(inputs.rpcUrl, inputs.privateKey);
     const verificationService = new VerificationService(inputs.etherscanApiKey);
 
-    // Execute deployment
-    const result = await deploymentService.deploy(inputs);
-    
-    // Handle proxy upgrade if proxy address provided
-    if (inputs.proxyAddress && result.implementationAddress) {
-      core.info(`Upgrading proxy at ${inputs.proxyAddress}`);
+    let result: DeploymentResult;
+
+    if (inputs.proxyAddress) {
+      // Upgrade existing proxy
+      core.info(`Upgrading existing proxy at ${inputs.proxyAddress}`);
+      
+      // Deploy only the implementation
+      const deployResult = await deploymentService.deploy(inputs);
+      
+      if (!deployResult.implementationAddress) {
+        throw new Error('Failed to deploy implementation contract');
+      }
+      
+      // Upgrade the proxy
       const upgradeResult = await proxyService.upgradeProxy(
         inputs.proxyAddress,
-        result.implementationAddress
+        deployResult.implementationAddress
       );
-      result.transactionHash = upgradeResult.transactionHash;
-      result.gasUsed = upgradeResult.gasUsed;
+      
+      result = {
+        implementationAddress: deployResult.implementationAddress,
+        proxyAddress: inputs.proxyAddress,
+        transactionHash: upgradeResult.transactionHash,
+        gasUsed: upgradeResult.gasUsed,
+        verified: false
+      };
+      
+      core.info(`Proxy upgrade completed. Implementation: ${result.implementationAddress}`);
+    } else {
+      // Deploy new proxy and implementation
+      core.info('Deploying new proxy and implementation');
+      result = await deploymentService.deploy(inputs);
     }
 
     // Verify contracts if requested

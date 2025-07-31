@@ -26,7 +26,7 @@ export class DeploymentService {
       );
 
       const result: DeploymentResult = {
-        implementationAddress: forgeOutput.contractAddress,
+        implementationAddress: forgeOutput.implementationAddress || forgeOutput.contractAddress,
         transactionHash: forgeOutput.transactionHash,
         gasUsed: forgeOutput.gasUsed,
         verified: false

@@ -111,9 +111,19 @@ export class ForgeRunner {
         }
       } catch {
         // Line is not JSON, check for contract address patterns
-        const addressMatch = line.match(/Contract deployed at: (0x[a-fA-F0-9]{40})/);
-        if (addressMatch) {
-          result.contractAddress = addressMatch[1];
+        const proxyMatch = line.match(/Proxy deployed at: (0x[a-fA-F0-9]{40})/);
+        if (proxyMatch) {
+          result.contractAddress = proxyMatch[1];
+        }
+        
+        const implementationMatch = line.match(/Implementation deployed at: (0x[a-fA-F0-9]{40})/);
+        if (implementationMatch) {
+          result.implementationAddress = implementationMatch[1];
+        }
+        
+        const contractMatch = line.match(/Contract deployed at: (0x[a-fA-F0-9]{40})/);
+        if (contractMatch) {
+          result.contractAddress = contractMatch[1];
         }
         
         const txHashMatch = line.match(/Transaction hash: (0x[a-fA-F0-9]{64})/);

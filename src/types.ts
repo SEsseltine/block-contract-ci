@@ -21,6 +21,7 @@ export interface DeploymentResult {
 
 export interface ForgeDeployOutput {
   contractAddress?: string;
+  implementationAddress?: string;
   transactionHash?: string;
   gasUsed?: bigint;
   logs: string[];

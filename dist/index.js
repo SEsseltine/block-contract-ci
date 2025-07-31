@@ -34783,9 +34783,17 @@ class ForgeRunner {
             }
             catch {
                 // Line is not JSON, check for contract address patterns
-                const addressMatch = line.match(/Contract deployed at: (0x[a-fA-F0-9]{40})/);
-                if (addressMatch) {
-                    result.contractAddress = addressMatch[1];
+                const proxyMatch = line.match(/Proxy deployed at: (0x[a-fA-F0-9]{40})/);
+                if (proxyMatch) {
+                    result.contractAddress = proxyMatch[1];
+                }
+                const implementationMatch = line.match(/Implementation deployed at: (0x[a-fA-F0-9]{40})/);
+                if (implementationMatch) {
+                    result.implementationAddress = implementationMatch[1];
+                }
+                const contractMatch = line.match(/Contract deployed at: (0x[a-fA-F0-9]{40})/);
+                if (contractMatch) {
+                    result.contractAddress = contractMatch[1];
                 }
                 const txHashMatch = line.match(/Transaction hash: (0x[a-fA-F0-9]{64})/);
                 if (txHashMatch) {
@@ -34903,14 +34911,30 @@ async function run() {
         const deploymentService = new DeploymentService_1.DeploymentService(forgeRunner);
         const proxyService = new ProxyService_1.ProxyService(inputs.rpcUrl, inputs.privateKey);
         const verificationService = new VerificationService_1.VerificationService(inputs.etherscanApiKey);
-        // Execute deployment
-        const result = await deploymentService.deploy(inputs);
-        // Handle proxy upgrade if proxy address provided
-        if (inputs.proxyAddress && result.implementationAddress) {
-            core.info(`Upgrading proxy at ${inputs.proxyAddress}`);
-            const upgradeResult = await proxyService.upgradeProxy(inputs.proxyAddress, result.implementationAddress);
-            result.transactionHash = upgradeResult.transactionHash;
-            result.gasUsed = upgradeResult.gasUsed;
+        let result;
+        if (inputs.proxyAddress) {
+            // Upgrade existing proxy
+            core.info(`Upgrading existing proxy at ${inputs.proxyAddress}`);
+            // Deploy only the implementation
+            const deployResult = await deploymentService.deploy(inputs);
+            if (!deployResult.implementationAddress) {
+                throw new Error('Failed to deploy implementation contract');
+            }
+            // Upgrade the proxy
+            const upgradeResult = await proxyService.upgradeProxy(inputs.proxyAddress, deployResult.implementationAddress);
+            result = {
+                implementationAddress: deployResult.implementationAddress,
+                proxyAddress: inputs.proxyAddress,
+                transactionHash: upgradeResult.transactionHash,
+                gasUsed: upgradeResult.gasUsed,
+                verified: false
+            };
+            core.info(`Proxy upgrade completed. Implementation: ${result.implementationAddress}`);
+        }
+        else {
+            // Deploy new proxy and implementation
+            core.info('Deploying new proxy and implementation');
+            result = await deploymentService.deploy(inputs);
         }
         // Verify contracts if requested
         if (inputs.verifyContracts && inputs.etherscanApiKey && result.implementationAddress) {
@@ -35015,7 +35039,7 @@ class DeploymentService {
             core.info(`Executing deploy script: ${inputs.deployScript}`);
             const forgeOutput = await this.forgeRunner.runDeployScript(inputs.deployScript, inputs.rpcUrl, inputs.privateKey, inputs.broadcast, inputs.gasLimit);
             const result = {
-                implementationAddress: forgeOutput.contractAddress,
+                implementationAddress: forgeOutput.implementationAddress || forgeOutput.contractAddress,
                 transactionHash: forgeOutput.transactionHash,
                 gasUsed: forgeOutput.gasUsed,
                 verified: false
